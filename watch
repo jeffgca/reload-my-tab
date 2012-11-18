@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+
+var util = require('util'),
+	fs = require('fs'),
+	path = require('path'),
+	request = require('request');
+
+var L = console.log;
+var server = 'http://localhost:9009/reload?u=';
+
+// process optional args
+// usage: watch <path-or-uri>
+
+var opt_uri = process.argv[3] || false;
+var _cwd = process.cwd();
+var watchfile = path.join(_cwd, '.watchfile');
+var local = path.join(_cwd, 'index.html');
+
+L('watching directory: '+_cwd);
+
+fs.watch(watchfile, function (event, filename) {
+	// L('Caught event: '+event);
+	var uri = opt_uri || local;
+	request(server+uri, function (error, response, body) {
+		if (error) {
+			L('Error: '+error);
+			return;
+		}
+		L('reloading...');
+	});
+});

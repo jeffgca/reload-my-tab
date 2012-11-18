@@ -1,0 +1,23 @@
+{
+    "preferences": [
+        {
+            "type": "integer",
+            "name": "listen_port",
+            "value": 9999,
+            "title": "Port to listen on"
+        },
+        {
+            "type": "bool",
+            "name": "debug",
+            "value": false,
+            "title": "Enable debugging"
+        }
+    ],
+    "name": "reload-my-tab",
+    "license": "MPL 2.0",
+    "author": "Jeff Griffiths ( jeff@canuckistani.ca )",
+    "version": "0.1",
+    "fullName": "reload-my-tab",
+    "id": "reload-my-tab@canuckistani.ca",
+    "description": "Simple add-on that listens on a tcp port and either re-loads or opens a url on each request."
+}

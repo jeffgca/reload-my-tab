@@ -1,0 +1,10 @@
+body {
+	background-color: #000;
+	color: lime;
+	font: 10pt monospace;
+}
+
+body * {
+	margin: 0;
+	padding: 0;
+}
