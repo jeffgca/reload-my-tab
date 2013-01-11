@@ -8,7 +8,7 @@
         },
         {
             "type": "bool",
-            "name": "debug",
+            "name": "DEBUG",
             "value": false,
             "title": "Enable debugging"
         }

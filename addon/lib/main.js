@@ -1,15 +1,16 @@
-const prefs = require('simple-prefs').prefs;
+const sp = require('simple-prefs');
 const url = require('url');
-const DEBUG = prefs.debug;
 const tabs = require('tabs');
 const windows = require('windows').browserWindows;
 
-var L = console.log;
+var listen_port = sp.prefs.listen_port,
+	DEBUG = sp.prefs.DEBUG;
 
-var D = function(s) {
-	if (DEBUG)
-		console.log(s);
-}
+var L = console.log,
+	D = function(s) {
+		if (DEBUG)
+			console.log(s);
+	}
 
 var { setTimeout } = require('timers');
 var tab_is_opening = false;
@@ -18,12 +19,11 @@ var target_uri,
 	_current_tab,
 	_current_win;
 
-
-
 // L(prefs.debug, prefs.listen_port);
 
 tabs.on('ready', function(tab) {
-	if (tab.url.indexOf(target_uri) !== -1) {
+	var _url = tab.url.split('?').shift();
+	if (_url.indexOf(target_uri) !== -1) {
 		_current_tab = tab;
 		_current_win = windows.activeWindow;
 	}
@@ -31,13 +31,15 @@ tabs.on('ready', function(tab) {
 });
 
 tabs.on('close', function(tab) {
-	if (tab.url.indexOf(target_uri) !== -1) {
+	var _url = tab.url.split('?').shift();
+	if (_url.indexOf(target_uri) !== -1) {
 		_current_tab = false;
 		_current_win = false;
 	}
 });
 
 function activateOrOpen(uri) {
+	D('opening '+uri);
 	if (_current_tab) {
 		_current_win.activate();
 		_current_tab.activate();
@@ -54,34 +56,52 @@ function activateOrOpen(uri) {
 // specific tab
 
 let content = "This is the HTTPD test file.\n";
-let listen_port = prefs.listen_port || "9999";
 
-D(listen_port);
+sp.on('listen_port', function() {
+	L('setting listen_port to '+sp.prefs.listen_port);
+	listen_port = sp.prefs.listen_port;
+	srv.stop(function() {
+		L('Restarting server...')
+		srv = startServerAsync(listen_port);
+	});
+});
 
-let { startServerAsync } = require("sdk/test/httpd");
-let srv = startServerAsync(listen_port);
+sp.on('DEBUG', function() {
+	L('setting DEBUG to '+sp.prefs.DEBUG);
+	DEBUG = sp.prefs.DEBUG;
+});
+
+// D(listen_port);
+
+var { startServerAsync } = require("sdk/test/httpd"),
+	srv = startServerAsync(listen_port);
+
+D('Server listening on port '+listen_port);
 
 require("unload").when(function cleanup() {
 	srv.stop(function() { 
-	  //you should continue execution from this point.
 	  return;
 	})
 });
 
 srv.registerPathHandler("/reload", function handle(request, response) {
-	response.setHeader("Content-Type", "application/json", false);
+
+	// L('Got here: '+request.queryString);
 
 	if (request.queryString) {
-		content = request.queryString+"\n";
+		response.setHeader("Content-Type", "application/json", false);
 
 		// 1. parse query string
 		var path = request.queryString.split('=').pop();
 
 		// 2. activate or open
-		L('should activate or open this file: '+path);
+		D('should activate or open this file: '+path);
 
 		// tabs.open(path);
 		activateOrOpen(path);
+		response.write(JSON.stringify({response: 'OK'}));
 	}
-	response.write(content);
+	else {
+		response.write('Error, no query string.');
+	}
 });
