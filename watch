@@ -1,31 +1,80 @@
 #!/usr/bin/env node
 
+/**  
+
+so now what we do is:
+
+1. run watch on the directory, this creates the 
+   signal file if it doesn't exist.
+
+2. the editor runs signal with the base dir as 
+   the arg - every time this is run the file is 
+   overwritten.
+
+3. watch is watching the signal file and triggers 
+   the request to firefox, causing firefox to 
+   open/reload the tab
+*/
+
 var util = require('util'),
 	fs = require('fs'),
 	path = require('path'),
-	request = require('request');
+	request = require('request'),
+	watchTree = require("watch-tree").watchTree;
 
-var L = console.log;
-var server = 'http://localhost:9009/reload?u=';
+var L = console.log, 
+	pp = function(o) { return JSON.stringify(o,null,'  ')},
+	// the server / port firefox is listening on
+	server = 'http://localhost:9009'; 
 
 // process optional args
 // usage: watch <path-or-uri>
+L(pp(process.argv));
 
-var opt_uri = process.argv[3] || false;
-var _cwd = process.cwd();
-var watchfile = path.join(_cwd, '.watchfile');
+function Usage(err) {
+	L(err);
+	L('Usage: watch <localDirectory> [<serverUrl>]')
+	process.exit(1);
+}
+
+if (!fs.existsSync(process.argv[2])) {
+	Usage('path doesn\'t exist: '+process.argv[2]);
+}
+else {
+	var localDir = path.resolve(process.argv[2]);
+}
+
+var webUrl = process.argv[3] || false;
+var _cwd = process.cwd(); // needed?
+// var watchfile = path.join(_cwd, '.watchfile');
 var local = path.join(_cwd, 'index.html');
 
-L('watching directory: '+_cwd);
+L('watching directory: '+localDir);
 
-fs.watch(watchfile, function (event, filename) {
-	// L('Caught event: '+event);
-	var uri = opt_uri || local;
-	request(server+uri, function (error, response, body) {
-		if (error) {
-			L('Error: '+error);
-			return;
-		}
-		L('reloading...');
+if (!module.parent) {
+
+	var tmpFile = localDir.replace(new RegExp(path.sep, 'g'), '-');
+	tmpFile = tmpFile.substring(1);	
+	var tmpPath = path.join(os.tmpDir(), tmpFile+'.signal');
+
+	if (!fs.existsSync(tmpPath)) {
+		fs.writeFileSync(tmpPath, Date.now(), 'utf8');
+	}
+
+	fs.watch(tmpPath, function (event, filename) {
+		L('Caught event: '+event);
+		var reloadArg = webUrl || local;
+		var url = util.format('%s/reload?u=%s', server, reloadArg);
+		L(url);
+		request(url, function (error, response, body) {
+			if (error) {
+				L('Error: '+error);
+				return;
+			}
+			L('reloading...');
+		});
 	});
-});
+
+}
+
+
