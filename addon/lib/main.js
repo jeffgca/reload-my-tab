@@ -3,6 +3,7 @@ const url = require('sdk/url');
 const tabs = require('sdk/tabs');
 const windows = require('sdk/windows').browserWindows;
 const { startServerAsync } = require("sdk/test/httpd");
+const self = require('self');
 
 var listen_port = sp.prefs.listen_port,
 	DEBUG = sp.prefs.DEBUG;
@@ -10,9 +11,10 @@ var listen_port = sp.prefs.listen_port,
 var L = console.log,
 	D = function(s) {
 		if (DEBUG)
-			console.log(s);
-	},
-	pp = function(o) { return JSON.stringify(o,null,'  '); };
+			console.warn('%s: %s', self.name, s);
+	};
+
+D('')
 
 var { setTimeout } = require('sdk/timers');
 var tab_is_opening = false;
@@ -117,6 +119,6 @@ srv.registerPathHandler("/reload", function handle(request, response) {
 	else {
 		var _m = 'no query string, bailing.';
 		response.write({response: _m});
-		console.warning(_m);
+		console.warn(_m);
 	}
 });
