@@ -3,7 +3,7 @@ const url = require('sdk/url');
 const tabs = require('sdk/tabs');
 const windows = require('sdk/windows').browserWindows;
 const { startServerAsync } = require("sdk/test/httpd");
-const self = require('self');
+const self = require('sdk/self');
 
 var listen_port = sp.prefs.listen_port,
 	DEBUG = sp.prefs.DEBUG;
@@ -14,7 +14,7 @@ var L = console.log,
 			console.warn('%s: %s', self.name, s);
 	};
 
-D('')
+D('DEBUG mode is enabled.')
 
 var { setTimeout } = require('sdk/timers');
 var tab_is_opening = false;
@@ -70,10 +70,10 @@ function activateOrOpen(uri, callback) {
 var content = "This is the HTTPD test file.\n";
 
 sp.on('listen_port', function() {
-	L('setting listen_port to '+sp.prefs.listen_port);
+	D('setting listen_port to '+sp.prefs.listen_port);
 	listen_port = sp.prefs.listen_port;
 	srv.stop(function() {
-		L('Restarting server...');
+		D('Restarting server...');
 		srv = startServerAsync(listen_port);
 	});
 });
