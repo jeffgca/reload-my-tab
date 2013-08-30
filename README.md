@@ -1,30 +1,23 @@
 # Reload My Tab
 
-A system for reloading a Firefox tab seamlessly while coding.
+This project is two things:
+1. a node webserver that uses node-static and watchr to a) server static files in a directory and b) watch files for changes in the same directory and ping Firefox when this happens using an http request like 'http://localhost:9009/reload?u=<some-url>'
+2. and add-on for Firefox that listens as an http server on a port and listens for requests from the node script like this
 
-Requirements:
+#### Requirements:
 
-* UNIX-ish OS ( Windows patches welcome )
 * node.js
 * a recent version of Firefox ( tested on Nightly )
 
-Install:
+To use:
+1. clone the repo and run npm install in the directory
+1. install the xpi. In the reload-my-tab add-ons preferences, note the listen server.
+1. in a terminal cd to your web root and run server.js:
 
-* copy the `watch` script to a folder on your path
-* in sublime text 2, create a new build script like this:
+    Usage: node ./server.js --dir=<site root> --url=<firefox url>
+    Options:
+      --dir  [required]
+      --url  [required]
 
-    cat web.sublime-build 
-    {
-        "cmd": ["touch", ".watchfile"]
-    }
 
-Synopsis:
-
-* in a terminal cd to the directory of your web app and run the included watch script
-* while editing in ST2, hit Command+B to run the build script
-* watch, amazed(!) as the app you are working on is either opened or refreshed each time you invoke the build
-
-Oddities:
-
-* for some reason, when editing css files the refresh is triggered on file *save*. weird.
 
