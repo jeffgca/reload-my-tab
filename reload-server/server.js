@@ -12,7 +12,10 @@ var PORT = 8080;
 var default_config = {};
 
 if (!module.parent) {
-  var argv = require('optimist').argv;
+  var argv = require('optimist')
+    .usage('Usage: node ./server.js --dir=<site root> --url=<firefox url>')
+    .demand(['dir', 'url'])
+    .argv;
   var config = {
     path: argv.dir,
     listener: function(e) {
@@ -24,7 +27,7 @@ if (!module.parent) {
       if (target) {
         console.log('GET %s', target);
         request(target, function (e, r, b) {
-          console.log('in callback: %s', r.statusCode);
+          console.log('in callback');
           if (!e && r.statusCode == 200) {
             console.log(r.body);
           }
