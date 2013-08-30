@@ -1,0 +1,12 @@
+{
+    "name": "watchr-reload-server",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+      "libyaml": "*",
+      "underscore": "*",
+      "watchr": "*",
+      "node-static": "*",
+      "request": "*"
+  }
+}
