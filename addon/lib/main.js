@@ -21,8 +21,6 @@ var target_uri,
 	_current_tab = tabs.activeTab,
 	_current_win = windows.activeWindow;
 
-// L(prefs.debug, prefs.listen_port);
-
 tabs.on('ready', function(tab) {
 	var _url = tab.url.split('?').shift();
 	if (_url.indexOf(target_uri) !== -1) {
@@ -60,7 +58,7 @@ function activateOrOpen(uri, callback) {
 	} catch (e) {
 		callback(e);
 	}
-	console.log(message);
+	D(message);
 	callback(null, message);
 }
 
@@ -92,7 +90,7 @@ D('Server listening on port '+listen_port);
 
 require("sdk/system/unload").when(function cleanup() {
 	srv.stop(function() {
-		console.log('Stopping HTTP server for reload-my-tab');
+		D('Stopping HTTP server for reload-my-tab');
 		return;
 	});
 });
@@ -110,12 +108,15 @@ srv.registerPathHandler("/reload", function handle(request, response) {
 		activateOrOpen(path, function(err, resp) {
 			if (err) {
 				response.write(JSON.stringify({response: err}));
+				console.error(err);
 				return;
 			}
 			response.write(JSON.stringify({response: resp}));
 		});
 	}
 	else {
-		response.write('Error, no query string.');
+		var _m = 'no query string, bailing.';
+		response.write({response: _m});
+		console.warning(_m);
 	}
 });
