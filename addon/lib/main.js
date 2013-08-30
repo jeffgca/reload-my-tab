@@ -1,7 +1,7 @@
-const sp = require('simple-prefs');
-const url = require('url');
-const tabs = require('tabs');
-const windows = require('windows').browserWindows;
+const sp = require('sdk/simple-prefs');
+const url = require('sdk/url');
+const tabs = require('sdk/tabs');
+const windows = require('sdk/windows').browserWindows;
 const { startServerAsync } = require("sdk/test/httpd");
 
 var listen_port = sp.prefs.listen_port,
@@ -12,9 +12,9 @@ var L = console.log,
 		if (DEBUG)
 			console.log(s);
 	},
-	pp = function(o) { return JSON.stringify(o,null,'  ')};
+	pp = function(o) { return JSON.stringify(o,null,'  '); };
 
-var { setTimeout } = require('timers');
+var { setTimeout } = require('sdk/timers');
 var tab_is_opening = false;
 
 var target_uri,
@@ -41,32 +41,39 @@ tabs.on('close', function(tab) {
 });
 
 function activateOrOpen(uri, callback) {
-	L(pp([_current_tab.url, uri]));
-
-	if (_current_tab && _current_tab.url === uri) {
-		_current_win.activate();
-		_current_tab.activate();
-		_current_tab.reload();
+	var message = '';
+	try {
+		console.log(_current_tab.url, uri, (_current_tab.url === uri));
+		if (_current_tab && _current_tab.url === uri) {
+			message = 're-opening tab '+_current_tab.id
+			_current_win.activate();
+			_current_tab.activate();
+			_current_tab.reload();
+		}
+		else {
+			message = 'opening new tab';
+			_current_tab = null;
+			_current_win = null;
+			target_uri = uri;
+			tabs.open(uri);
+		}
+	} catch (e) {
+		callback(e);
 	}
-	else {
-		_current_tab = null;
-		_current_win = null;
-		target_uri = uri;
-		tabs.open(uri);
-	}
-
+	console.log(message);
+	callback(null, message);
 }
 
 // run a local web server that accepts requests to refresh a 
 // specific tab
 
-let content = "This is the HTTPD test file.\n";
+var content = "This is the HTTPD test file.\n";
 
 sp.on('listen_port', function() {
 	L('setting listen_port to '+sp.prefs.listen_port);
 	listen_port = sp.prefs.listen_port;
 	srv.stop(function() {
-		L('Restarting server...')
+		L('Restarting server...');
 		srv = startServerAsync(listen_port);
 	});
 });
@@ -83,22 +90,12 @@ var	srv = startServerAsync(listen_port);
 
 D('Server listening on port '+listen_port);
 
-require("unload").when(function cleanup() {
-	srv.stop(function() { 
+require("sdk/system/unload").when(function cleanup() {
+	srv.stop(function() {
 		console.log('Stopping HTTP server for reload-my-tab');
-	  return;
-	})
+		return;
+	});
 });
-
-function toFileUri(localPath) {
-    let file = Cc["@mozilla.org/file/local;1"].
-           createInstance(Ci.nsILocalFile);
-
-    file.initWithPath(localPath);
-    let { Services } = Cu.import("resource://gre/modules/Services.jsm");
-    let url = Services.io.newFileURI(file);
-    return url.spec;
-}
 
 srv.registerPathHandler("/reload", function handle(request, response) {
 
@@ -108,14 +105,14 @@ srv.registerPathHandler("/reload", function handle(request, response) {
 		// 1. parse query string
 		var path = request.queryString.split('=').pop();
 
-		console.log(toFileUri(path));
-
+		// console.dir(request);
 
 		activateOrOpen(path, function(err, resp) {
-			if (err) { 
+			if (err) {
 				response.write(JSON.stringify({response: err}));
-			}	
-			response.write(JSON.stringify({response: 'OK'}));
+				return;
+			}
+			response.write(JSON.stringify({response: resp}));
 		});
 	}
 	else {
